@@ -34,3 +34,19 @@ export interface GenerationConfig {
   export interface GenerationResponse {
     generated_data: GeneratedDataItem[];
   }
+  
+  export interface TabProps {
+    config: GenerationConfig;
+    onChange: (key: keyof GenerationConfig, value: any) => void;
+    isLoading: boolean;
+  }
+  
+  export interface RequestHistoryItem {
+    id: string;
+    timestamp: Date;
+    duration: number;
+    config: GenerationConfig;
+    response: GenerationResponse | null;
+    status: 'success' | 'error';
+    isMockData?: boolean;
+  }

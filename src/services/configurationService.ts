@@ -8,26 +8,21 @@ export const generateData = async (
   config: GenerationConfig, 
   apiKey: string
 ): Promise<GenerationResponse> => {
-  try {
-    const response = await fetch('http://localhost:8000/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-API-Key': apiKey,
-      },
-      body: JSON.stringify(config),
-      credentials: 'include',
-    });
+  const response = await fetch('/api/generate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(config)
+  });
 
-    if (!response.ok) {
-      throw new Error('Failed to generate data');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error generating data:', error);
-    throw error;
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to generate data');
   }
+
+  return response.json();
 };
 
 const getCsrfToken = (): string | null => {

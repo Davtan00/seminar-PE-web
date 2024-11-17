@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, FormEvent } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -23,12 +23,13 @@ const ApiKeyModal: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = () => {
-    if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!apiKey.trim().startsWith('sk-') || apiKey.length < 20) {
       setError('Please enter a valid OpenAI API key starting with "sk-"');
       return;
     }
-    onSubmit(apiKey);
+    onSubmit(apiKey.trim());
     setApiKey('');
     setError('');
   };
@@ -36,43 +37,45 @@ const ApiKeyModal: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Enter OpenAI API Key</DialogTitle>
-      <DialogContent>
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Your API key will be securely stored for this session only.
-        </Alert>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
+      <form onSubmit={handleSubmit}>
+        <DialogContent>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Your API key will be securely stored for this session only.
           </Alert>
-        )}
-        <TextField
-          autoFocus
-          margin="dense"
-          label="API Key"
-          type={showApiKey ? 'text' : 'password'}
-          fullWidth
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  edge="end"
-                >
-                  {showApiKey ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained">
-          Submit
-        </Button>
-      </DialogActions>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <TextField
+            autoFocus
+            margin="dense"
+            label="API Key"
+            type={showApiKey ? 'text' : 'password'}
+            fullWidth
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowApiKey(!showApiKey)}
+                    edge="end"
+                  >
+                    {showApiKey ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button type="submit" variant="contained">
+            Submit
+          </Button>
+        </DialogActions>
+      </form>
     </Dialog>
   );
 };

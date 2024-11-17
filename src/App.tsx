@@ -7,9 +7,9 @@ import ModelParameters from './components/ModelParameters';
 import LoadingIndicator from './components/LoadingIndicator';
 import DownloadButton from './components/DownloadButton';
 import AdvancedParameters from './components/AdvancedParameters';
-import { GenerationConfig, GeneratedDataItem, GenerationResponse } from './types/types';
+import { GenerationConfig, GeneratedDataItem, GenerationResponse, RequestHistoryItem } from './types/types';
 import GeneratedDataDisplay from './components/GeneratedDataDisplay';
-import { generateData } from './services/configurationService';
+import { generateData } from './services/apiServices';
 import ApiKeyModal from './components/ApiKeyModal';
 import TuneIcon from '@mui/icons-material/Tune';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -17,10 +17,35 @@ import SaveIcon from '@mui/icons-material/Save';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DownloadIcon from '@mui/icons-material/Download';
 import PieChartIcon from '@mui/icons-material/PieChart';
-import CollapsiblePanel from './components/CollapsiblePanel';
 import SentimentDistributionChart from './components/SentimentDistributionChart';
+import ModelSettingsTab from './components/tabs/ModelSettingsTab';
+import SentimentDistributionTab from './components/tabs/SentimentDistributionTab';
+import AdvancedSettingsTab from './components/tabs/AdvancedSettingsTab';
+import HistoryIcon from '@mui/icons-material/History';
+import RequestsHistoryTab from './components/tabs/RequestsHistoryTab';
 
 const theme = createTheme();
+
+// Add this before the App component
+const mockGeneratedData: GenerationResponse = {
+  generated_data: [
+    {
+      id: 1,
+      text: "The pastries here are always fresh and delicious!",
+      sentiment: "positive"
+    },
+    {
+      id: 2,
+      text: "I love their croissants; they're the best in town!",
+      sentiment: "positive"
+    },
+    {
+      id: 3,
+      text: "The chocolate cake was simply divine.",
+      sentiment: "positive"
+    }
+  ]
+};
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -59,6 +84,15 @@ function App() {
 
   const [activeTab, setActiveTab] = useState(0);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [requestHistory, setRequestHistory] = useState<RequestHistoryItem[]>([{
+    id: 'mock-test-request',
+    timestamp: new Date('2024-01-01T12:00:00'),
+    duration: 1234,
+    config: { ...config },
+    response: mockGeneratedData,
+    status: 'success',
+    isMockData: true
+  }]);
 
   const getStoredApiKey = (): string | null => {
     return sessionStorage.getItem('openai_api_key');
@@ -75,22 +109,50 @@ function App() {
     const storedApiKey = getStoredApiKey();
     
     if (!storedApiKey) {
+      console.log('No API key found, showing modal');
       setShowApiKeyModal(true);
       return;
     }
 
+    console.log('Starting generation with stored API key');
     await generateWithApiKey(storedApiKey);
   };
 
   const generateWithApiKey = async (apiKey: string) => {
     setIsLoading(true);
+    const startTime = Date.now();
+    
     try {
+      console.log('Calling generateData');
       const response = await generateData(config, apiKey);
+      console.log('Generation successful:', response);
       setGeneratedResponse(response);
+      
+      // Add to history
+      setRequestHistory(prev => [{
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        duration: Date.now() - startTime,
+        config: { ...config },
+        response,
+        status: 'success'
+      }, ...prev]);
+      
     } catch (error) {
       console.error('Generation failed:', error);
-      // If API key is invalid, clear it and show modal again
+      
+      // Add failed request to history
+      setRequestHistory(prev => [{
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        duration: Date.now() - startTime,
+        config: { ...config },
+        response: null,
+        status: 'error'
+      }, ...prev]);
+      
       if ((error as any)?.message?.includes('API key')) {
+        console.log('Invalid API key, clearing and showing modal');
         sessionStorage.removeItem('openai_api_key');
         setShowApiKeyModal(true);
       }
@@ -241,114 +303,74 @@ function App() {
               flexDirection: 'column'
             }}
           >
-            {/* Tabs with fixed width and better spacing */}
             <Tabs 
-              value={activeTab} 
-              onChange={(_, newValue) => setActiveTab(newValue)}
-              sx={{ 
-                borderBottom: 1, 
-                borderColor: 'divider',
-                backgroundColor: '#fff',
-                borderTopLeftRadius: '12px',
-                borderTopRightRadius: '12px',
-                minHeight: '48px',
-                '& .MuiTab-root': {
-                  minWidth: '200px', // Fixed width for tabs
-                  minHeight: '48px',
-                  textTransform: 'none', // Better text readability
-                }
-              }}
-            >
-              <Tab 
-                icon={<TuneIcon />} 
-                label="Model & Distribution" 
-                iconPosition="start"
-              />
-              <Tab 
-                icon={<SettingsIcon />} 
-                label="Advanced Settings" 
-                iconPosition="start"
-              />
-            </Tabs>
+  value={activeTab} 
+  onChange={(_, newValue) => setActiveTab(newValue)}
+  sx={{ 
+    borderBottom: 1, 
+    borderColor: 'divider',
+    backgroundColor: '#fff',
+    borderTopLeftRadius: '12px',
+    borderTopRightRadius: '12px',
+    minHeight: '48px',
+    '& .MuiTab-root': {
+      minWidth: '180px',
+      minHeight: '48px',
+      textTransform: 'none',
+    }
+  }}
+>
+  <Tab 
+    icon={<TuneIcon />} 
+    label="Model Settings" 
+    iconPosition="start"
+  />
+  <Tab 
+    icon={<PieChartIcon />} 
+    label="Sentiment Distribution" 
+    iconPosition="start"
+  />
+  <Tab 
+    icon={<SettingsIcon />} 
+    label="Advanced Settings" 
+    iconPosition="start"
+  />
+  <Tab 
+    icon={<HistoryIcon />} 
+    label="Requests" 
+    iconPosition="start"
+  />
+</Tabs>
 
-            {/* Content Area */}
-            <Box sx={{ 
-              flexGrow: 1, 
-              overflowY: 'auto',
-              p: 3
-            }}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <CollapsiblePanel
-                    title="Model Selection"
-                    icon={<TuneIcon />}
-                    defaultExpanded={true}
-                  >
-                    <ModelParameters config={config} onChange={handleConfigChange} />
-                  </CollapsiblePanel>
+{/* Content Area */}
+<Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
+  {activeTab === 0 && (
+    <ModelSettingsTab 
+      config={config} 
+      onChange={handleConfigChange}
+      isLoading={isLoading}
+    />
+  )}
+  {activeTab === 1 && (
+    <SentimentDistributionTab 
+      config={config} 
+      onChange={handleConfigChange}
+      isLoading={isLoading}
+    />
+  )}
+  {activeTab === 2 && (
+    <AdvancedSettingsTab 
+      config={config} 
+      onChange={handleConfigChange}
+      isLoading={isLoading}
+    />
+  )}
+  {activeTab === 3 && (
+    <RequestsHistoryTab history={requestHistory} />
+  )}
+</Box>
 
-                  <CollapsiblePanel
-                    title="Sentiment Distribution"
-                    icon={<PieChartIcon />}
-                    defaultExpanded={true}
-                  >
-                    <SentimentDistributionChart distribution={config.sentimentDistribution} />
-                    <GenerationForm 
-                      config={config} 
-                      onChange={handleConfigChange}
-                      onGenerate={handleGenerate}
-                      isLoading={isLoading}
-                    />
-                  </CollapsiblePanel>
-                </Grid>
 
-                <Grid item xs={12} md={6}>
-                  <CollapsiblePanel
-                    title="Advanced Settings"
-                    icon={<SettingsIcon />}
-                    defaultExpanded={false}
-                  >
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      <Box>
-                        <Typography variant="subtitle2" gutterBottom>
-                          Content Control
-                        </Typography>
-                        <AdvancedParameterItem
-                          label="Privacy Level"
-                          description="Controls data privacy and synthetic generation"
-                          value={config.privacyLevel}
-                          onChange={(value) => handleConfigChange('privacyLevel', value)}
-                        />
-                        <AdvancedParameterItem
-                          label="Bias Control"
-                          description="Adjusts bias mitigation in generated content"
-                          value={config.biasControl}
-                          onChange={(value) => handleConfigChange('biasControl', value)}
-                        />
-                      </Box>
-
-                      <Box>
-                        <Typography variant="subtitle2" gutterBottom>
-                          Generation Quality
-                        </Typography>
-                        <AdvancedParameterItem
-                          label="Realism"
-                          description="Adjusts how realistic the generated content is"
-                          value={config.realism}
-                          onChange={(value) => handleConfigChange('realism', value)}
-                        />
-                        <AdvancedParameterItem
-                          label="Domain Relevance"
-                          description="Controls topic adherence"
-                          value={config.domainRelevance}
-                          onChange={(value) => handleConfigChange('domainRelevance', value)}
-                        />
-                      </Box>
-                    </Box>
-                  </CollapsiblePanel>
-                </Grid>
-              </Grid>
-            </Box>
           </Paper>
 
           {/* Results Section */}
