@@ -39,12 +39,12 @@ const ModelParameters: React.FC<Props> = ({ config, onChange }) => {
 
   return (
     <>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h6" sx={{ mb: 1 }}>
         Model Parameters
       </Typography>
       
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="subtitle2" gutterBottom>
+      <Box sx={{ mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           Model Selection
         </Typography>
         <TextField
@@ -53,12 +53,12 @@ const ModelParameters: React.FC<Props> = ({ config, onChange }) => {
           value={config.model}
           onChange={(e) => onChange('model', e.target.value)}
           variant="outlined"
-          sx={{ mb: 2 }}
+          size="small"
         >
           {availableModels.map((model) => (
             <MenuItem key={model.value} value={model.value}>
-              <Box>
-                <Typography variant="subtitle1">
+              <Box sx={{ py: 0.5 }}>
+                <Typography variant="body2">
                   {model.label}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -70,8 +70,8 @@ const ModelParameters: React.FC<Props> = ({ config, onChange }) => {
         </TextField>
       </Box>
 
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" gutterBottom>
+      <Box sx={{ mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           Temperature
         </Typography>
         <Slider
@@ -82,11 +82,12 @@ const ModelParameters: React.FC<Props> = ({ config, onChange }) => {
           step={0.1}
           marks
           valueLabelDisplay="auto"
+          size="small"
         />
       </Box>
 
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" gutterBottom>
+      <Box sx={{ mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           Top P
         </Typography>
         <Slider
@@ -97,11 +98,12 @@ const ModelParameters: React.FC<Props> = ({ config, onChange }) => {
           step={0.1}
           marks
           valueLabelDisplay="auto"
+          size="small"
         />
       </Box>
 
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" gutterBottom>
+      <Box sx={{ mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           Max Tokens
         </Typography>
         <TextField
@@ -113,8 +115,8 @@ const ModelParameters: React.FC<Props> = ({ config, onChange }) => {
         />
       </Box>
 
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" gutterBottom>
+      <Box sx={{ mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           Frequency Penalty
         </Typography>
         <Slider
@@ -125,11 +127,12 @@ const ModelParameters: React.FC<Props> = ({ config, onChange }) => {
           step={0.1}
           marks
           valueLabelDisplay="auto"
+          size="small"
         />
       </Box>
 
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" gutterBottom>
+      <Box sx={{ mb: 1.5 }}>
+        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
           Presence Penalty
         </Typography>
         <Slider
@@ -140,6 +143,7 @@ const ModelParameters: React.FC<Props> = ({ config, onChange }) => {
           step={0.1}
           marks
           valueLabelDisplay="auto"
+          size="small"
         />
       </Box>
     </>

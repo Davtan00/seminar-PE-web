@@ -16,6 +16,9 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import SaveIcon from '@mui/icons-material/Save';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DownloadIcon from '@mui/icons-material/Download';
+import PieChartIcon from '@mui/icons-material/PieChart';
+import CollapsiblePanel from './components/CollapsiblePanel';
+import SentimentDistributionChart from './components/SentimentDistributionChart';
 
 const theme = createTheme();
 
@@ -40,7 +43,7 @@ function App() {
     presencePenalty: 0.0,
     model: 'gpt-4o-mini',
 
-    // Advanced Controls, set to a default value
+    // Advanced Controls
     privacyLevel: 0.5,
     biasControl: 0.5,
     sentimentIntensity: 0.5,
@@ -271,40 +274,45 @@ function App() {
             {/* Content Area */}
             <Box sx={{ 
               flexGrow: 1, 
-              overflowY: activeTab === 0 ? 'hidden' : 'auto',
+              overflowY: 'auto',
               p: 3
             }}>
-              {activeTab === 0 && (
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <CollapsiblePanel
+                    title="Model Selection"
+                    icon={<TuneIcon />}
+                    defaultExpanded={true}
+                  >
                     <ModelParameters config={config} onChange={handleConfigChange} />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="h6" gutterBottom>
-                    </Typography>
+                  </CollapsiblePanel>
+
+                  <CollapsiblePanel
+                    title="Sentiment Distribution"
+                    icon={<PieChartIcon />}
+                    defaultExpanded={true}
+                  >
+                    <SentimentDistributionChart distribution={config.sentimentDistribution} />
                     <GenerationForm 
                       config={config} 
                       onChange={handleConfigChange}
                       onGenerate={handleGenerate}
                       isLoading={isLoading}
                     />
-                  </Grid>
+                  </CollapsiblePanel>
                 </Grid>
-              )}
-              {activeTab === 1 && (
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <Typography variant="h6" gutterBottom>
-                      Advanced Settings
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ mb: 4 }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Content Control
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        {/* First column of advanced settings */}
+
+                <Grid item xs={12} md={6}>
+                  <CollapsiblePanel
+                    title="Advanced Settings"
+                    icon={<SettingsIcon />}
+                    defaultExpanded={false}
+                  >
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <Box>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Content Control
+                        </Typography>
                         <AdvancedParameterItem
                           label="Privacy Level"
                           description="Controls data privacy and synthetic generation"
@@ -317,22 +325,12 @@ function App() {
                           value={config.biasControl}
                           onChange={(value) => handleConfigChange('biasControl', value)}
                         />
-                        <AdvancedParameterItem
-                          label="Sentiment Intensity"
-                          description="Controls strength of expressed sentiments"
-                          value={config.sentimentIntensity}
-                          onChange={(value) => handleConfigChange('sentimentIntensity', value)}
-                        />
                       </Box>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ mb: 4 }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Generation Quality
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        {/* Second column of advanced settings */}
+
+                      <Box>
+                        <Typography variant="subtitle2" gutterBottom>
+                          Generation Quality
+                        </Typography>
                         <AdvancedParameterItem
                           label="Realism"
                           description="Adjusts how realistic the generated content is"
@@ -345,17 +343,11 @@ function App() {
                           value={config.domainRelevance}
                           onChange={(value) => handleConfigChange('domainRelevance', value)}
                         />
-                        <AdvancedParameterItem
-                          label="Diversity"
-                          description="Adjusts variety in generated content"
-                          value={config.diversity}
-                          onChange={(value) => handleConfigChange('diversity', value)}
-                        />
                       </Box>
                     </Box>
-                  </Grid>
+                  </CollapsiblePanel>
                 </Grid>
-              )}
+              </Grid>
             </Box>
           </Paper>
 
