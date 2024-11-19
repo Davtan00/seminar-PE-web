@@ -18,6 +18,8 @@ import SentimentDistributionTab from './components/tabs/SentimentDistributionTab
 import AdvancedSettingsTab from './components/tabs/AdvancedSettingsTab';
 import HistoryIcon from '@mui/icons-material/History';
 import RequestsHistoryTab from './components/tabs/RequestsHistoryTab';
+import { exportConfigToFile, loadConfigFromFile } from './utils/fileHandlers';
+import { makeSecureRequest } from './utils/secureApiClient';
 
 const theme = createTheme();
 
@@ -54,7 +56,7 @@ function App() {
     },
     rowCount: 100,
     domain: 'all',
-    
+
     // Model Parameters
     temperature: 0.7,
     topP: 0.9,
@@ -102,7 +104,7 @@ function App() {
 
   const handleGenerate = async () => {
     const storedApiKey = getStoredApiKey();
-    
+
     if (!storedApiKey) {
       console.log('No API key found, showing modal');
       setShowApiKeyModal(true);
@@ -116,27 +118,23 @@ function App() {
   const generateWithApiKey = async (apiKey: string) => {
     setIsLoading(true);
     const startTime = Date.now();
-    
+
     try {
-      console.log('Calling generateData');
-      const response = await generateData(config, apiKey);
-      console.log('Generation successful:', response);
-      setGeneratedResponse(response);
-      
-      // Add to history
+      const response = await makeSecureRequest(apiKey, config);
+      setGeneratedResponse(response.data);
+
       setRequestHistory(prev => [{
         id: Date.now().toString(),
         timestamp: new Date(),
         duration: Date.now() - startTime,
         config: { ...config },
-        response,
+        response: response.data,
         status: 'success'
       }, ...prev]);
-      
-    } catch (error) {
+
+    } catch (error: any) {
       console.error('Generation failed:', error);
-      
-      // Add failed request to history
+
       setRequestHistory(prev => [{
         id: Date.now().toString(),
         timestamp: new Date(),
@@ -145,8 +143,8 @@ function App() {
         response: null,
         status: 'error'
       }, ...prev]);
-      
-      if ((error as any)?.message?.includes('API key')) {
+
+      if (error?.response?.status === 401 || error?.message?.includes('API key')) {
         console.log('Invalid API key, clearing and showing modal');
         sessionStorage.removeItem('openai_api_key');
         setShowApiKeyModal(true);
@@ -163,53 +161,41 @@ function App() {
   };
 
   const handleExportConfig = () => {
-    const configJson = JSON.stringify(config, null, 2);
-    const blob = new Blob([configJson], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'sentiment-config.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    exportConfigToFile(config);
   };
 
   const handleLoadConfig = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: ProgressEvent<FileReader>) => {
-        try {
-          if (e.target?.result) {
-            const loadedConfig = JSON.parse(e.target.result as string);
-            setConfig(loadedConfig);
-            setShowSuccessNotification(true);
-            setTimeout(() => {
-              setShowSuccessNotification(false);
-            }, 3000); // Hide after 3 seconds
-          }
-        } catch (error) {
+      loadConfigFromFile(
+        file,
+        (loadedConfig) => {
+          setConfig(loadedConfig);
+          setShowSuccessNotification(true);
+          setTimeout(() => {
+            setShowSuccessNotification(false);
+          }, 3000);
+        },
+        (error) => {
           console.error('Error parsing config file:', error);
         }
-      };
-      reader.readAsText(file);
+      );
     }
   };
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ 
+      <Box sx={{
         minHeight: '100vh',
         backgroundColor: '#f5f7fa',
         padding: '1rem'
       }}>
         <Container maxWidth={false} sx={{ width: '98%' }}>
           {/* Header with Action Buttons */}
-          <Paper 
+          <Paper
             elevation={0}
-            sx={{ 
+            sx={{
               p: 2.5,
               mb: 2,
               backgroundColor: 'primary.main',
@@ -217,8 +203,8 @@ function App() {
               borderRadius: '12px'
             }}
           >
-            <Box sx={{ 
-              display: 'flex', 
+            <Box sx={{
+              display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center'
             }}>
@@ -244,14 +230,14 @@ function App() {
                     color="secondary"
                     component="span"
                     startIcon={<DownloadIcon />}
-                    sx={{ 
+                    sx={{
                       backgroundColor: 'rgba(255, 255, 255, 0.2)',
                       '&:hover': {
                         backgroundColor: 'rgba(255, 255, 255, 0.3)',
                       }
                     }}
                   >
-                    Load Config
+                    Import Config
                   </Button>
                 </label>
                 <Button
@@ -259,7 +245,7 @@ function App() {
                   color="secondary"
                   startIcon={<SaveIcon />}
                   onClick={handleExportConfig}
-                  sx={{ 
+                  sx={{
                     backgroundColor: 'rgba(255, 255, 255, 0.2)',
                     '&:hover': {
                       backgroundColor: 'rgba(255, 255, 255, 0.3)',
@@ -273,7 +259,7 @@ function App() {
                   startIcon={<PlayArrowIcon />}
                   onClick={handleGenerate}
                   disabled={isLoading}
-                  sx={{ 
+                  sx={{
                     backgroundColor: 'white',
                     color: 'primary.main',
                     '&:hover': {
@@ -288,9 +274,9 @@ function App() {
           </Paper>
 
           {/* Main Content */}
-          <Paper 
-            elevation={2} 
-            sx={{ 
+          <Paper
+            elevation={2}
+            sx={{
               borderRadius: '12px',
               border: '1px solid rgba(0,0,0,0.1)',
               height: 'calc(100vh - 200px)',
@@ -298,81 +284,81 @@ function App() {
               flexDirection: 'column'
             }}
           >
-            <Tabs 
-  value={activeTab} 
-  onChange={(_, newValue) => setActiveTab(newValue)}
-  sx={{ 
-    borderBottom: 1, 
-    borderColor: 'divider',
-    backgroundColor: '#fff',
-    borderTopLeftRadius: '12px',
-    borderTopRightRadius: '12px',
-    minHeight: '48px',
-    '& .MuiTab-root': {
-      minWidth: '180px',
-      minHeight: '48px',
-      textTransform: 'none',
-    }
-  }}
->
-  <Tab 
-    icon={<TuneIcon />} 
-    label="Model Settings" 
-    iconPosition="start"
-  />
-  <Tab 
-    icon={<PieChartIcon />} 
-    label="Sentiment Distribution" 
-    iconPosition="start"
-  />
-  <Tab 
-    icon={<SettingsIcon />} 
-    label="Advanced Settings" 
-    iconPosition="start"
-  />
-  <Tab 
-    icon={<HistoryIcon />} 
-    label="Requests" 
-    iconPosition="start"
-  />
-</Tabs>
+            <Tabs
+              value={activeTab}
+              onChange={(_, newValue) => setActiveTab(newValue)}
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                backgroundColor: '#fff',
+                borderTopLeftRadius: '12px',
+                borderTopRightRadius: '12px',
+                minHeight: '48px',
+                '& .MuiTab-root': {
+                  minWidth: '180px',
+                  minHeight: '48px',
+                  textTransform: 'none',
+                }
+              }}
+            >
+              <Tab
+                icon={<TuneIcon />}
+                label="Model Settings"
+                iconPosition="start"
+              />
+              <Tab
+                icon={<PieChartIcon />}
+                label="Sentiment Distribution"
+                iconPosition="start"
+              />
+              <Tab
+                icon={<SettingsIcon />}
+                label="Advanced Settings"
+                iconPosition="start"
+              />
+              <Tab
+                icon={<HistoryIcon />}
+                label="Requests"
+                iconPosition="start"
+              />
+            </Tabs>
 
-{/* Content Area */}
-<Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
-  {activeTab === 0 && (
-    <ModelSettingsTab 
-      config={config} 
-      onChange={handleConfigChange}
-      isLoading={isLoading}
-    />
-  )}
-  {activeTab === 1 && (
-    <SentimentDistributionTab 
-      config={config} 
-      onChange={handleConfigChange}
-      isLoading={isLoading}
-    />
-  )}
-  {activeTab === 2 && (
-    <AdvancedSettingsTab 
-      config={config} 
-      onChange={handleConfigChange}
-      isLoading={isLoading}
-    />
-  )}
-  {activeTab === 3 && (
-    <RequestsHistoryTab history={requestHistory} />
-  )}
-</Box>
+            {/* Content Area */}
+            <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }}>
+              {activeTab === 0 && (
+                <ModelSettingsTab
+                  config={config}
+                  onChange={handleConfigChange}
+                  isLoading={isLoading}
+                />
+              )}
+              {activeTab === 1 && (
+                <SentimentDistributionTab
+                  config={config}
+                  onChange={handleConfigChange}
+                  isLoading={isLoading}
+                />
+              )}
+              {activeTab === 2 && (
+                <AdvancedSettingsTab
+                  config={config}
+                  onChange={handleConfigChange}
+                  isLoading={isLoading}
+                />
+              )}
+              {activeTab === 3 && (
+                <RequestsHistoryTab history={requestHistory} />
+              )}
+            </Box>
 
 
           </Paper>
 
           {/* Results Section */}
           {generatedResponse && (
-            <Paper 
-              elevation={2} 
-              sx={{ 
+            <Paper
+              elevation={2}
+              sx={{
                 p: 3,
                 mt: 2,
                 borderRadius: '12px',
@@ -381,9 +367,9 @@ function App() {
                 overflowY: 'auto'
               }}
             >
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
                 alignItems: 'center',
                 mb: 2
               }}>
@@ -394,7 +380,7 @@ function App() {
             </Paper>
           )}
 
-          {/* API Key Modal */}
+          {/* openAI API Key Modal,we might need another backend API key to secure this more. */}
           <ApiKeyModal
             open={showApiKeyModal}
             onClose={() => setShowApiKeyModal(false)}
@@ -421,12 +407,5 @@ function App() {
   );
 }
 
-// New component for advanced parameter items
-interface AdvancedParameterItemProps {
-  label: string;
-  description: string;
-  value: number;
-  onChange: (value: number) => void;
-}
 
 export default App;

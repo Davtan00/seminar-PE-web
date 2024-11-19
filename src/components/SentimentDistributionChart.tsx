@@ -20,6 +20,7 @@ const SentimentDistributionChart: React.FC<Props> = ({ distribution }) => {
         <Box 
           sx={{ 
             width: `${distribution.positive}%`,
+            height: '24px',
             bgcolor: 'success.light',
             transition: 'width 0.3s ease'
           }} 
@@ -27,6 +28,7 @@ const SentimentDistributionChart: React.FC<Props> = ({ distribution }) => {
         <Box 
           sx={{ 
             width: `${distribution.negative}%`,
+            height: '24px',
             bgcolor: 'error.light',
             transition: 'width 0.3s ease'
           }} 
@@ -34,6 +36,7 @@ const SentimentDistributionChart: React.FC<Props> = ({ distribution }) => {
         <Box 
           sx={{ 
             width: `${distribution.neutral}%`,
+            height: '24px',
             bgcolor: 'grey.300',
             transition: 'width 0.3s ease'
           }} 

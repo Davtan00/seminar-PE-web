@@ -23,10 +23,20 @@ const ApiKeyModal: React.FC<Props> = ({ open, onClose, onSubmit }) => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [error, setError] = useState('');
 
+  const getErrorMessage = () => {
+    if (!apiKey.startsWith('sk-')) {
+      return 'API key must start with "sk-"';
+    }
+    if (apiKey.length <= 20) {
+      return 'API key must be longer than 20 characters';
+    }
+    return 'Please enter a valid OpenAI API key';
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!apiKey.trim().startsWith('sk-') || apiKey.length < 20) {
-      setError('Please enter a valid OpenAI API key starting with "sk-"');
+    if (!apiKey.trim().startsWith('sk-') || apiKey.length <= 20) {
+      setError(getErrorMessage());
       return;
     }
     onSubmit(apiKey.trim());
@@ -54,7 +64,17 @@ const ApiKeyModal: React.FC<Props> = ({ open, onClose, onSubmit }) => {
             type={showApiKey ? 'text' : 'password'}
             fullWidth
             value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
+            onChange={(e) => {
+              setApiKey(e.target.value);
+              if (error) setError('');
+            }}
+            onBlur={() => {
+              if (apiKey && (!apiKey.startsWith('sk-') || apiKey.length <= 20)) {
+                setError(getErrorMessage());
+              }
+            }}
+            error={!!error}
+            helperText={error || 'Enter your OpenAI API key'}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">

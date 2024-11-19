@@ -19,15 +19,24 @@ const ApiKeyInput: React.FC<Props> = ({ onApiKeyChange }) => {
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
+  const [error, setError] = useState('');
+
+  const getErrorMessage = () => {
+    if (!apiKey.startsWith('sk-')) {
+      return 'API key must start with "sk-"';
+    }
+    if (apiKey.length <= 20) {
+      return 'API key must be longer than 20 characters';
+    }
+    return 'Please enter a valid OpenAI API key';
+  };
 
   const handleApiKeyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
     setApiKey(newValue);
     onApiKeyChange(newValue);
-    if (!isTouched) setIsTouched(true);
+    if (error) setError(''); // Clear error when typing
   };
-
-  const isValidApiKey = apiKey.startsWith('sk-') && apiKey.length > 20;
 
   return (
     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -47,10 +56,13 @@ const ApiKeyInput: React.FC<Props> = ({ onApiKeyChange }) => {
           label="OpenAI API Key"
           value={apiKey}
           onChange={handleApiKeyChange}
-          error={isTouched && !isValidApiKey}
-          helperText={isTouched && !isValidApiKey ? 
-            'Please enter a valid OpenAI API key starting with "sk-"' : 
-            'Enter your OpenAI API key to generate sentiments'}
+          onBlur={() => {
+            if (apiKey && (!apiKey.startsWith('sk-') || apiKey.length <= 20)) {
+              setError(getErrorMessage());
+            }
+          }}
+          error={!!error}
+          helperText={error || 'Enter your OpenAI API key to generate sentiments'}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
