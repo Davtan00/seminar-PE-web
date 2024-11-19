@@ -13,12 +13,12 @@ const ModelSettingsTab: React.FC<Props> = ({ config, onChange,  isLoading }) => 
     {
       value: 'gpt-4o-mini',
       label: 'GPT-4o-mini',
-      description: 'Best for most sentiment tasks, very fast and cheap'
+      description: 'Best for our use case very fast and cheap'
     },
     {
       value: 'gpt-4',
       label: 'GPT-4',
-      description: 'Most capable model, best for very complex sentiment analysis'
+      description: 'Most capable model, best for very complex sentiment analysis,EXPENSIVE'
     },
     {
       value: 'gpt-4-turbo',

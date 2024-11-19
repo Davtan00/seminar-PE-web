@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import { CssBaseline, Box, Typography, Container, Paper, Tabs, Tab, Button, Slider, Alert, Snackbar } from '@mui/material';
-import Grid from '@mui/material/Grid';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import GenerationForm from './components/GenerationForm';
-import ModelParameters from './components/ModelParameters';
 import LoadingIndicator from './components/LoadingIndicator';
 import DownloadButton from './components/DownloadButton';
-import AdvancedParameters from './components/AdvancedParameters';
 import { GenerationConfig, GeneratedDataItem, GenerationResponse, RequestHistoryItem } from './types/types';
 import GeneratedDataDisplay from './components/GeneratedDataDisplay';
 import { generateData } from './services/apiServices';
@@ -17,7 +13,6 @@ import SaveIcon from '@mui/icons-material/Save';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import DownloadIcon from '@mui/icons-material/Download';
 import PieChartIcon from '@mui/icons-material/PieChart';
-import SentimentDistributionChart from './components/SentimentDistributionChart';
 import ModelSettingsTab from './components/tabs/ModelSettingsTab';
 import SentimentDistributionTab from './components/tabs/SentimentDistributionTab';
 import AdvancedSettingsTab from './components/tabs/AdvancedSettingsTab';
@@ -433,30 +428,5 @@ interface AdvancedParameterItemProps {
   value: number;
   onChange: (value: number) => void;
 }
-
-const AdvancedParameterItem: React.FC<AdvancedParameterItemProps> = ({
-  label,
-  description,
-  value,
-  onChange
-}) => {
-  return (
-    <Box>
-      <Typography variant="subtitle2">{label}</Typography>
-      <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-        {description}
-      </Typography>
-      <Slider
-        value={value}
-        onChange={(_, newValue) => onChange(newValue as number)}
-        min={0}
-        max={1}
-        step={0.1}
-        marks
-        valueLabelDisplay="auto"
-      />
-    </Box>
-  );
-};
 
 export default App;

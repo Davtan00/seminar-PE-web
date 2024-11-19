@@ -7,7 +7,6 @@ interface Props {
 }
 
 const SentimentDistributionChart: React.FC<Props> = ({ distribution }) => {
-  const total = Object.values(distribution).reduce((a, b) => a + b, 0);
   
   return (
     <Box sx={{ mb: 2 }}>
