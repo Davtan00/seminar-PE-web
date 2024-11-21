@@ -1,7 +1,7 @@
 import { GenerationConfig, GenerationResponse } from '../types/types';
 
 const API_BASE_URL = 'http://localhost:8000';
-
+//UNUSED
 export const generateData = async (
   config: GenerationConfig, 
   apiKey: string

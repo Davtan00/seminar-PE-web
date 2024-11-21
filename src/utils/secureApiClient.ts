@@ -3,11 +3,20 @@ import { encryptApiKey } from './encryption';
 import { HmacSHA256 } from 'crypto-js';
 import Base64 from 'crypto-js/enc-base64';
 
+const getApiKey = (): string => {
+  const key = process.env.REACT_APP_API_KEY;
+  if (!key && process.env.NODE_ENV === 'production') {
+    throw new Error('API key must be set in production');
+  }
+  return key || 'fallback-api-key-for-dev';
+};
+
 const secureApiClient = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   headers: {
     'Content-Type': 'application/json',
     'X-Client-Version': process.env.REACT_APP_VERSION,
+    'X-API-KEY': getApiKey(),
   }
 });
 

@@ -5,7 +5,6 @@ import LoadingIndicator from './components/LoadingIndicator';
 import DownloadButton from './components/DownloadButton';
 import { GenerationConfig, GeneratedDataItem, GenerationResponse, RequestHistoryItem } from './types/types';
 import GeneratedDataDisplay from './components/GeneratedDataDisplay';
-import { generateData } from './services/apiServices';
 import ApiKeyModal from './components/ApiKeyModal';
 import TuneIcon from '@mui/icons-material/Tune';
 import SettingsIcon from '@mui/icons-material/Settings';
