@@ -59,8 +59,8 @@ function App() {
     domain: 'all',
 
     // Model Parameters
-    temperature: 0.7,
-    topP: 0.9,
+    temperature: 1,
+    topP: 1,
     maxTokens: 100,
     frequencyPenalty: 0.0,
     presencePenalty: 0.0,

@@ -36,9 +36,9 @@ const ModelSettingsTab: React.FC<Props> = ({ config, onChange,  isLoading }) => 
     {
       key: 'temperature',
       label: 'Temperature',
-      description: 'Controls randomness in the output (0 = deterministic, 2 = very random)',
+      description: 'Controls randomness in the output (0 = deterministic, 1 = very random)',
       min: 0,
-      max: 2,
+      max: 1,
       step: 0.1
     },
     {
