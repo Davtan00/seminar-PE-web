@@ -15,10 +15,11 @@ import { RequestHistoryItem } from '../../types/types';
 
 interface Props {
   history: RequestHistoryItem[];
+  onDownloadComplete: (itemId: string) => void;
 }
 
-const RequestsHistoryTab: React.FC<Props> = ({ history }) => {
-  const downloadJson = (data: any, filename: string) => {
+const RequestsHistoryTab: React.FC<Props> = ({ history, onDownloadComplete }) => {
+  const downloadJson = (data: any, filename: string, itemId?: string) => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -28,6 +29,10 @@ const RequestsHistoryTab: React.FC<Props> = ({ history }) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    if (filename.includes('generated-data') && itemId) {
+      onDownloadComplete(itemId);
+    }
   };
 
   return (
@@ -63,13 +68,6 @@ const RequestsHistoryTab: React.FC<Props> = ({ history }) => {
                 )}
               </Box>
               <Box>
-                <Tooltip title="Download Response">
-                  <IconButton
-                    onClick={() => downloadJson(item.response, `response-${item.id}.json`)}
-                  >
-                    <DownloadIcon />
-                  </IconButton>
-                </Tooltip>
                 <Tooltip title="Download Config">
                   <IconButton
                     onClick={() => downloadJson(item.config, `config-${item.id}.json`)}
@@ -77,6 +75,20 @@ const RequestsHistoryTab: React.FC<Props> = ({ history }) => {
                     <SettingsIcon />
                   </IconButton>
                 </Tooltip>
+                {item.status === 'success' && item.response && (
+                  <Tooltip title="Download Generated Data">
+                    <IconButton
+                      onClick={() => downloadJson(
+                        item.response, 
+                        `generated-data-${item.id}.json`,
+                        item.id
+                      )}
+                      disabled={item.downloaded}
+                    >
+                      <DownloadIcon />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </Box>
             </ListItem>
           </Paper>

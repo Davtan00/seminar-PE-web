@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CssBaseline, Box, Typography, Container, Paper, Tabs, Tab, Button, Slider, Alert, Snackbar } from '@mui/material';
+import { CssBaseline, Box, Typography, Container, Paper, Tabs, Tab, Button, Slider, Alert, Snackbar, Switch, FormControlLabel } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import LoadingIndicator from './components/LoadingIndicator';
 import DownloadButton from './components/DownloadButton';
@@ -75,7 +75,8 @@ function App() {
     noiseLevel: 0.3,
     culturalSensitivity: 0.8,
     formality: 0.5,
-    lexicalComplexity: 0.5
+    lexicalComplexity: 0.5,
+    strictMode: false,
   });
 
   const [activeTab, setActiveTab] = useState(0);
@@ -120,13 +121,14 @@ function App() {
 
     try {
       const response = await makeSecureRequest(apiKey, config);
-      setGeneratedResponse(response.data);
-
+      
+      // Store only metadata in history, not the full response
       setRequestHistory(prev => [{
         id: Date.now().toString(),
         timestamp: new Date(),
         duration: Date.now() - startTime,
         config: { ...config },
+        responseSize: response.data.generated_data.length,
         response: response.data,
         status: 'success'
       }, ...prev]);
@@ -182,6 +184,33 @@ function App() {
     }
   };
 
+  const StrictModeToggle = () => (
+    <FormControlLabel
+      control={
+        <Switch
+          checked={config.strictMode}
+          onChange={(e) => handleConfigChange('strictMode', e.target.checked)}
+          color="success"
+        />
+      }
+      label="Strict Mode"
+      sx={{ color: 'white' }}
+    />
+  );
+
+  const handleDownloadComplete = (itemId: string) => {
+    setRequestHistory(prev => prev.map(item => {
+      if (item.id === itemId) {
+        return {
+          ...item,
+          response: null,
+          downloaded: true
+        };
+      }
+      return item;
+    }));
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -215,13 +244,15 @@ function App() {
                   Configure and generate sentiment data with advanced AI models
                 </Typography>
               </Box>
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                <StrictModeToggle />
                 <input
                   type="file"
                   accept=".json"
                   style={{ display: 'none' }}
                   id="config-file-input"
                   onChange={handleLoadConfig}
+                  {...({} as any)}
                 />
                 <label htmlFor="config-file-input">
                   <Button
@@ -346,7 +377,10 @@ function App() {
                 />
               )}
               {activeTab === 3 && (
-                <RequestsHistoryTab history={requestHistory} />
+                <RequestsHistoryTab 
+                  history={requestHistory} 
+                  onDownloadComplete={handleDownloadComplete}
+                />
               )}
             </Box>
 

@@ -23,6 +23,7 @@ export interface GenerationConfig {
     culturalSensitivity: number;
     formality: number;
     lexicalComplexity: number;
+    strictMode: boolean;
   }
   
   export interface GeneratedDataItem {
@@ -47,6 +48,8 @@ export interface GenerationConfig {
     duration: number;
     config: GenerationConfig;
     response: GenerationResponse | null;
+    responseSize?: number;
     status: 'success' | 'error';
     isMockData?: boolean;
+    downloaded?: boolean;
   }

@@ -96,8 +96,8 @@ const SentimentDistributionTab: React.FC<Props> = ({
                         type="number"
                         value={config.rowCount}
                         onChange={(e) => onChange('rowCount', parseInt(e.target.value))}
-                        inputProps={{ min: 1, max: 1000 }}
-                        helperText="Number of sentences to generate (1-1000)"
+                        inputProps={{ min: 1, max: 100000 }}
+                        helperText="Number of sentences to generate (1-10000)"
                     />
 
                     <TextField

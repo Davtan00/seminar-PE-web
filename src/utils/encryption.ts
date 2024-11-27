@@ -11,10 +11,9 @@ const getEncryptionKey = (): string => {
 const ENCRYPTION_KEY = getEncryptionKey();
 
 export const encryptApiKey = (apiKey: string): string => {
-  return AES.encrypt(apiKey, ENCRYPTION_KEY).toString();
+  return btoa(apiKey);
 };
 
 export const decryptApiKey = (encryptedKey: string): string => {
-  const bytes = AES.decrypt(encryptedKey, ENCRYPTION_KEY);
-  return bytes.toString(enc.Utf8);
+  return atob(encryptedKey);
 }; 
