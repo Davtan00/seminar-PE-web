@@ -53,4 +53,7 @@ export interface GenerationConfig {
     status: 'success' | 'error';
     isMockData?: boolean;
     downloaded?: boolean;
+    name: string;
+    jsonDownloaded?: boolean;
+    pdfDownloaded?: boolean;
   }

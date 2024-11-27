@@ -6,9 +6,10 @@ import { getPdfUrl } from '../utils/secureApiClient';
 
 interface Props {
   requestId: string;
+  onPdfDownload?: () => void;
 }
 
-export const AnalysisDownloadButton: React.FC<Props> = ({ requestId }) => {
+export const AnalysisDownloadButton: React.FC<Props> = ({ requestId, onPdfDownload }) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(getPdfUrl(requestId));
 
   useEffect(() => {
@@ -33,7 +34,10 @@ export const AnalysisDownloadButton: React.FC<Props> = ({ requestId }) => {
   return (
     <Tooltip title="Download Analysis PDF">
       <IconButton 
-        onClick={() => window.open(pdfUrl, '_blank')}
+        onClick={() => {
+          window.open(pdfUrl, '_blank');
+          onPdfDownload?.();
+        }}
       >
         <PictureAsPdfIcon />
       </IconButton>

@@ -19,6 +19,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import RequestsHistoryTab from './components/tabs/RequestsHistoryTab';
 import { exportConfigToFile, loadConfigFromFile } from './utils/fileHandlers';
 import { makeSecureRequest } from './utils/secureApiClient';
+import NameInputModal from './components/NameInputModal';
 
 const theme = createTheme();
 
@@ -89,8 +90,12 @@ function App() {
     config: { ...config },
     response: mockGeneratedData,
     status: 'success',
-    isMockData: true
+    isMockData: true,
+    name: 'Mock Test Name'
   }]);
+
+  const [showNameModal, setShowNameModal] = useState(false);
+  const [pendingApiKey, setPendingApiKey] = useState<string | null>(null);
 
   const getStoredApiKey = (): string | null => {
     return sessionStorage.getItem('openai_api_key');
@@ -113,19 +118,19 @@ function App() {
     }
 
     console.log('Starting generation with stored API key');
-    await generateWithApiKey(storedApiKey);
+    setShowNameModal(true);
   };
 
-  const generateWithApiKey = async (apiKey: string) => {
+  const generateWithApiKey = async (apiKey: string, name: string) => {
     setIsLoading(true);
     const startTime = Date.now();
 
     try {
       const response = await makeSecureRequest(apiKey, config);
       
-      // Store only metadata in history, not the full response
       setRequestHistory(prev => [{
         id: response.data.request_id,
+        name: name,
         timestamp: new Date(),
         duration: Date.now() - startTime,
         config: { ...config },
@@ -134,7 +139,6 @@ function App() {
         status: 'success'
       }, ...prev]);
 
-      // Update the generated response state
       setGeneratedResponse(response.data);
 
     } catch (error: any) {
@@ -146,7 +150,8 @@ function App() {
         duration: Date.now() - startTime,
         config: { ...config },
         response: null,
-        status: 'error'
+        status: 'error',
+        name: name
       }, ...prev]);
 
       if (error?.response?.status === 401 || error?.message?.includes('API key')) {
@@ -162,7 +167,22 @@ function App() {
   const handleApiKeySubmit = (apiKey: string) => {
     sessionStorage.setItem('openai_api_key', apiKey);
     setShowApiKeyModal(false);
-    generateWithApiKey(apiKey);
+    setPendingApiKey(apiKey);
+    setShowNameModal(true);
+  };
+
+  const handleNameSubmit = (name: string) => {
+    setShowNameModal(false);
+    if (pendingApiKey) {
+      generateWithApiKey(pendingApiKey, name);
+      setPendingApiKey(null);
+    } else {
+      // Fallback to stored key if pendingApiKey is null
+      const storedApiKey = getStoredApiKey();
+      if (storedApiKey) {
+        generateWithApiKey(storedApiKey, name);
+      }
+    }
   };
 
   const handleExportConfig = () => {
@@ -202,13 +222,13 @@ function App() {
     />
   );
 
-  const handleDownloadComplete = (itemId: string) => {
+  const handleJsonDownload = (itemId: string) => {
     setRequestHistory(prev => prev.map(item => {
       if (item.id === itemId) {
         return {
           ...item,
-          response: null,
-          downloaded: true
+          jsonDownloaded: true,
+          response: item.response
         };
       }
       return item;
@@ -383,7 +403,7 @@ function App() {
               {activeTab === 3 && (
                 <RequestsHistoryTab 
                   history={requestHistory} 
-                  onDownloadComplete={handleDownloadComplete}
+                  onJsonDownload={handleJsonDownload}
                 />
               )}
             </Box>
@@ -422,6 +442,14 @@ function App() {
             open={showApiKeyModal}
             onClose={() => setShowApiKeyModal(false)}
             onSubmit={handleApiKeySubmit}
+          />
+          <NameInputModal
+            open={showNameModal}
+            onClose={() => {
+              setShowNameModal(false);
+              setPendingApiKey(null);
+            }}
+            onSubmit={handleNameSubmit}
           />
 
           {/* Loading Indicator */}

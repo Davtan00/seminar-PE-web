@@ -16,11 +16,14 @@ import { AnalysisDownloadButton } from '../AnalysisDownloadButton';
 
 interface Props {
   history: RequestHistoryItem[];
-  onDownloadComplete: (itemId: string) => void;
+  onJsonDownload: (itemId: string) => void;
 }
 
-const RequestsHistoryTab: React.FC<Props> = ({ history, onDownloadComplete }) => {
-  const downloadJson = (data: any, filename: string, itemId?: string) => {
+const RequestsHistoryTab: React.FC<Props> = ({ history, onJsonDownload }) => {
+  const downloadJson = (data: any, name: string, timestamp: string, itemId?: string) => {
+    const formattedTimestamp = timestamp.replace(/[/:]/g, '-');
+    const filename = `${name}_${formattedTimestamp}.json`;
+    
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -31,8 +34,8 @@ const RequestsHistoryTab: React.FC<Props> = ({ history, onDownloadComplete }) =>
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    if (filename.includes('generated-data') && itemId) {
-      onDownloadComplete(itemId);
+    if (itemId) {
+      onJsonDownload(itemId);
     }
   };
 
@@ -41,37 +44,57 @@ const RequestsHistoryTab: React.FC<Props> = ({ history, onDownloadComplete }) =>
       <Typography variant="h6" gutterBottom>Generation History</Typography>
       <List>
         {history.map((item) => (
-          <Paper key={item.id} sx={{ mb: 2, p: 2 }}>
+          <Paper 
+            key={item.id} 
+            sx={{ 
+              mb: 2, 
+              p: 2,
+              borderLeft: 6,
+              borderColor: item.status === 'success' ? 'success.main' : 'error.main'
+            }}
+          >
             <ListItem
-              sx={{ display: 'flex', justifyContent: 'space-between' }}
+              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
               disablePadding
             >
-              <Box>
-                <Typography variant="subtitle1">
-                  {new Date(item.timestamp).toLocaleString()}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Duration: {item.duration}ms
-                </Typography>
-                <Chip
-                  label={item.status}
-                  color={item.status === 'success' ? 'success' : 'error'}
-                  size="small"
-                  sx={{ mt: 1 }}
-                />
-                {item.isMockData && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mb: 1 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ mb: 0.5 }}>
+                    {item.name || 'Unnamed Generation'}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {new Date(item.timestamp).toLocaleString()}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {item.isMockData && (
+                    <Chip
+                      label="TEST REQUEST"
+                      color="info"
+                      size="small"
+                    />
+                  )}
                   <Chip
-                    label="TEST REQUEST"
-                    color="info"
+                    label={`${item.response?.generated_data?.length || 0} Reviews`}
+                    color="primary"
                     size="small"
-                    sx={{ ml: 1 }}
                   />
-                )}
+                  <Chip
+                    label={`${item.duration}ms`}
+                    variant="outlined"
+                    size="small"
+                  />
+                </Box>
               </Box>
-              <Box>
+              
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                 <Tooltip title="Download Config">
                   <IconButton
-                    onClick={() => downloadJson(item.config, `config-${item.id}.json`)}
+                    onClick={() => downloadJson(
+                      item.config, 
+                      item.name || 'config',
+                      new Date(item.timestamp).toISOString()
+                    )}
                   >
                     <SettingsIcon />
                   </IconButton>
@@ -81,11 +104,12 @@ const RequestsHistoryTab: React.FC<Props> = ({ history, onDownloadComplete }) =>
                     <Tooltip title="Download Generated Data">
                       <IconButton
                         onClick={() => downloadJson(
-                          item.response, 
-                          `generated-data-${item.id}.json`,
+                          item.response,
+                          item.name || 'generated-data',
+                          new Date(item.timestamp).toISOString(),
                           item.id
                         )}
-                        disabled={item.downloaded}
+                        disabled={item.jsonDownloaded}
                       >
                         <DownloadIcon />
                       </IconButton>
