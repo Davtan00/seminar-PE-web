@@ -33,6 +33,7 @@ export interface GenerationConfig {
   }
   
   export interface GenerationResponse {
+    request_id: string;
     generated_data: GeneratedDataItem[];
   }
   

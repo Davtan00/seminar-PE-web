@@ -40,7 +40,8 @@ const mockGeneratedData: GenerationResponse = {
       text: "The chocolate cake was simply divine.",
       sentiment: "positive"
     }
-  ]
+  ],
+  request_id: 'mock-request-007'
 };
 
 function App() {
