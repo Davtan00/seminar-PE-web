@@ -1,5 +1,7 @@
 // components/AnalysisDownloadButton.tsx
 import React, { useEffect, useState } from 'react';
+import { IconButton, Tooltip } from '@mui/material';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { getPdfUrl } from '../utils/secureApiClient';
 
 interface Props {
@@ -10,20 +12,18 @@ export const AnalysisDownloadButton: React.FC<Props> = ({ requestId }) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(getPdfUrl(requestId));
 
   useEffect(() => {
-    // Check if URL is already in localStorage
     const storedUrl = getPdfUrl(requestId);
     if (storedUrl) {
       setPdfUrl(storedUrl);
       return;
     }
 
-    // Listen for PDF ready event
     const handlePdfReady = (event: CustomEvent) => {
       if (event.detail === requestId) {
         setPdfUrl(getPdfUrl(requestId));
       }
     };
-
+    // Listen for PDF ready event
     window.addEventListener('pdfReady', handlePdfReady as EventListener);
     return () => window.removeEventListener('pdfReady', handlePdfReady as EventListener);
   }, [requestId]);
@@ -31,11 +31,12 @@ export const AnalysisDownloadButton: React.FC<Props> = ({ requestId }) => {
   if (!pdfUrl) return null;
 
   return (
-    <button 
-      onClick={() => window.open(pdfUrl, '_blank')}
-      className="download-button"
-    >
-      Download Analysis PDF
-    </button>
+    <Tooltip title="Download Analysis PDF">
+      <IconButton 
+        onClick={() => window.open(pdfUrl, '_blank')}
+      >
+        <PictureAsPdfIcon />
+      </IconButton>
+    </Tooltip>
   );
 };

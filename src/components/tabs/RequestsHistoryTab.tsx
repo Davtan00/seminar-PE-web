@@ -12,6 +12,7 @@ import {
 import DownloadIcon from '@mui/icons-material/Download';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { RequestHistoryItem } from '../../types/types';
+import { AnalysisDownloadButton } from '../AnalysisDownloadButton';
 
 interface Props {
   history: RequestHistoryItem[];
@@ -76,18 +77,21 @@ const RequestsHistoryTab: React.FC<Props> = ({ history, onDownloadComplete }) =>
                   </IconButton>
                 </Tooltip>
                 {item.status === 'success' && item.response && (
-                  <Tooltip title="Download Generated Data">
-                    <IconButton
-                      onClick={() => downloadJson(
-                        item.response, 
-                        `generated-data-${item.id}.json`,
-                        item.id
-                      )}
-                      disabled={item.downloaded}
-                    >
-                      <DownloadIcon />
-                    </IconButton>
-                  </Tooltip>
+                  <>
+                    <Tooltip title="Download Generated Data">
+                      <IconButton
+                        onClick={() => downloadJson(
+                          item.response, 
+                          `generated-data-${item.id}.json`,
+                          item.id
+                        )}
+                        disabled={item.downloaded}
+                      >
+                        <DownloadIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <AnalysisDownloadButton requestId={item.id} />
+                  </>
                 )}
               </Box>
             </ListItem>

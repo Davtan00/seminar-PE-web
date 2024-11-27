@@ -32,10 +32,13 @@ export const makeSecureRequest = async (apiKey: string, config: any) => {
       config
     });
 
-    // Start lightweight polling
-    pollStatus(response.data.request_id);
+    // Start polling for PDF generation immediately
+    if (response.data?.request_id) {
+      pollStatus(response.data.request_id);
+    }
     
-    return response.data;
+    // Return the response object, not just the data
+    return { data: response.data };
   } catch (error) {
     console.error('API Request failed:', error);
     throw error;

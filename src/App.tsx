@@ -125,7 +125,7 @@ function App() {
       
       // Store only metadata in history, not the full response
       setRequestHistory(prev => [{
-        id: Date.now().toString(),
+        id: response.data.request_id,
         timestamp: new Date(),
         duration: Date.now() - startTime,
         config: { ...config },
@@ -133,6 +133,9 @@ function App() {
         response: response.data,
         status: 'success'
       }, ...prev]);
+
+      // Update the generated response state
+      setGeneratedResponse(response.data);
 
     } catch (error: any) {
       console.error('Generation failed:', error);
