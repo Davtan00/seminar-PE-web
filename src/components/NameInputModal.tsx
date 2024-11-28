@@ -14,7 +14,7 @@ interface Props {
   onSubmit: (name: string) => void;
 }
 
-const NameInputModal: React.FC<Props> = ({ open, onClose, onSubmit }) => {
+const NameInputModal = ({ open, onClose, onSubmit }: Props) => {
   const [name, setName] = useState('');
 
   const handleSubmit = () => {
@@ -34,7 +34,7 @@ const NameInputModal: React.FC<Props> = ({ open, onClose, onSubmit }) => {
           label="Generation Name"
           fullWidth
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
           placeholder="e.g., Technology Reviews Testing"
         />
       </DialogContent>

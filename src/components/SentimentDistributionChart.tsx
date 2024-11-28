@@ -6,7 +6,7 @@ interface Props {
   distribution: GenerationConfig['sentimentDistribution'];
 }
 
-const SentimentDistributionChart: React.FC<Props> = ({ distribution }) => {
+const SentimentDistributionChart = ({ distribution }: Props) => {
   
   return (
     <Box sx={{ mb: 2 }}>

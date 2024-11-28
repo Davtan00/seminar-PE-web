@@ -8,7 +8,7 @@ interface Props {
   isLoading: boolean;
 }
 
-const ModelSettingsTab: React.FC<Props> = ({ config, onChange,  isLoading }) => {
+const ModelSettingsTab = ({ config, onChange, isLoading }: Props) => {
   const availableModels = [
     {
       value: 'gpt-4o-mini',
@@ -77,7 +77,7 @@ const ModelSettingsTab: React.FC<Props> = ({ config, onChange,  isLoading }) => 
           select
           fullWidth
           value={config.model}
-          onChange={(e) => onChange('model', e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange('model', e.target.value)}
           variant="outlined"
           helperText="Select the AI model to use for generation"
         >
@@ -106,7 +106,9 @@ const ModelSettingsTab: React.FC<Props> = ({ config, onChange,  isLoading }) => 
             </Typography>
             <Slider
               value={config[param.key as keyof GenerationConfig] as number}
-              onChange={(_, value) => onChange(param.key as keyof GenerationConfig, value)}
+              onChange={(_: Event, value: number | number[], activeThumb: number) => 
+                onChange(param.key as keyof GenerationConfig, value as number)
+              }
               min={param.min}
               max={param.max}
               step={param.step}

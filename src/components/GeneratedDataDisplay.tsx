@@ -5,49 +5,67 @@ import {
   Typography,
   List,
   ListItem,
-  ListItemText,
   Chip
 } from '@mui/material';
-import { GeneratedDataItem } from '../types/types';
 
-interface Props {
-  data: GeneratedDataItem[];
+interface ResponseData {
+  request_id: string;
+  generated_data: any[];
+  summary: {
+    total_generated: number;
+    sentiment_distribution: {
+      positive: number;
+      negative: number;
+      neutral: number;
+    }
+  }
 }
 
-const GeneratedDataDisplay: React.FC<Props> = ({ data }) => {
-  const getSentimentColor = (sentiment: string) => {
-    switch (sentiment) {
-      case 'positive':
-        return 'success';
-      case 'negative':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
+interface Props {
+  data: ResponseData;
+}
+
+const GeneratedDataDisplay = ({ data }: Props) => {
+  if (!data || !data.summary) {
+    return null;
+  }
+
+  const { summary } = data;
+  const { sentiment_distribution } = summary;
 
   return (
     <Paper elevation={3} sx={{ p: 2, mt: 2 }}>
       <Typography variant="h6" gutterBottom>
-        Generated Sentiments ({data.length})
+        Generation Summary
       </Typography>
-      <List>
-        {data.map((item) => (
-          <ListItem key={item.id} divider>
-            <ListItemText
-              primary={item.text}
-              secondary={
-                <Chip
-                  label={item.sentiment}
-                  color={getSentimentColor(item.sentiment)}
-                  size="small"
-                  sx={{ mt: 1 }}
-                />
-              }
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="body1">
+          Total Generated: {summary.total_generated}
+        </Typography>
+      </Box>
+      <Box>
+        <Typography variant="h6" gutterBottom>
+          Sentiment Distribution
+        </Typography>
+        <List>
+          <ListItem>
+            <Chip 
+              label={`Positive: ${sentiment_distribution.positive}`}
+              color="success"
+              sx={{ mr: 1 }}
+            />
+            <Chip 
+              label={`Negative: ${sentiment_distribution.negative}`}
+              color="error"
+              sx={{ mr: 1 }}
+            />
+            <Chip 
+              label={`Neutral: ${sentiment_distribution.neutral}`}
+              color="default"
             />
           </ListItem>
-        ))}
-      </List>
+        </List>
+      </Box>
     </Paper>
   );
 };

@@ -35,6 +35,14 @@ export interface GenerationConfig {
   export interface GenerationResponse {
     request_id: string;
     generated_data: GeneratedDataItem[];
+    summary: {
+      total_generated: number;
+      sentiment_distribution: {
+        positive: number;
+        negative: number;
+        neutral: number;
+      }
+    }
   }
   
   export interface TabProps {
@@ -50,7 +58,7 @@ export interface GenerationConfig {
     config: GenerationConfig;
     response: GenerationResponse | null;
     responseSize?: number;
-    status: 'success' | 'error';
+    status: 'success' | 'error' | 'processing';
     isMockData?: boolean;
     downloaded?: boolean;
     name: string;

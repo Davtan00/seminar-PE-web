@@ -9,7 +9,7 @@ interface Props {
   onPdfDownload?: () => void;
 }
 
-export const AnalysisDownloadButton: React.FC<Props> = ({ requestId, onPdfDownload }) => {
+export const AnalysisDownloadButton = ({ requestId, onPdfDownload }: Props) => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(getPdfUrl(requestId));
 
   useEffect(() => {

@@ -8,7 +8,7 @@ interface Props {
   isLoading: boolean;
 }
 
-const AdvancedSettingsTab: React.FC<Props> = ({ config, onChange, isLoading }) => {
+const AdvancedSettingsTab = ({ config, onChange, isLoading }: Props) => {
   const advancedParameters = [
     {
       group: 'Content Control',
@@ -90,13 +90,12 @@ const AdvancedSettingsTab: React.FC<Props> = ({ config, onChange, isLoading }) =
               </Typography>
               <Slider
                 value={config[param.key as keyof GenerationConfig] as number}
-                onChange={(_, value) => onChange(param.key as keyof GenerationConfig, value)}
+                onChange={(_: Event, value: number | number[], activeThumb: number) => 
+                  onChange(param.key as keyof GenerationConfig, Array.isArray(value) ? value[0] : value)
+                }
                 min={0}
                 max={1}
                 step={0.1}
-                marks
-                valueLabelDisplay="auto"
-                valueLabelFormat={(value) => `${(value * 100).toFixed(0)}%`}
               />
             </Box>
           ))}

@@ -7,7 +7,7 @@ interface Props {
   data: GenerationResponse | null;
 }
 
-const DownloadButton: React.FC<Props> = ({ data }) => {
+const DownloadButton = ({ data }: Props) => {
   const handleDownload = () => {
     if (!data) return;
 

@@ -9,11 +9,11 @@ interface Props {
     isLoading: boolean;
 }
 
-const SentimentDistributionTab: React.FC<Props> = ({
+const SentimentDistributionTab = ({
     config,
     onChange,
     isLoading
-}) => {
+}: Props) => {
     const domains = ['all', 'business', 'technology', 'healthcare', 'education'];
 
     const calculateNewDistribution = (type: 'positive' | 'negative', value: number, currentDistribution: GenerationConfig['sentimentDistribution']) => {
@@ -48,7 +48,7 @@ const SentimentDistributionTab: React.FC<Props> = ({
             <Typography variant="h6" gutterBottom>
                 Distribution Preview
             </Typography>
-            <SentimentDistributionChart distribution={config.sentimentDistribution} />
+            {SentimentDistributionChart({ distribution: config.sentimentDistribution })}
 
             <Box sx={{ mt: 4 }}>
                 <Typography variant="h6" gutterBottom>
@@ -59,21 +59,23 @@ const SentimentDistributionTab: React.FC<Props> = ({
                     <Typography>Positive: {config.sentimentDistribution.positive}%</Typography>
                     <Slider
                         value={config.sentimentDistribution.positive}
-                        onChange={(_, value) => handleSentimentChange('positive', value as number)}
+                        onChange={(_: Event, value: number | number[], activeThumb: number) => 
+                            handleSentimentChange('positive', Array.isArray(value) ? value[0] : value)
+                        }
                         max={100}
                         marks
                         valueLabelDisplay="auto"
-                        valueLabelFormat={(value) => `${value}%`}
                     />
 
                     <Typography>Negative: {config.sentimentDistribution.negative}%</Typography>
                     <Slider
                         value={config.sentimentDistribution.negative}
-                        onChange={(_, value) => handleSentimentChange('negative', value as number)}
+                        onChange={(_: Event, value: number | number[], activeThumb: number) => 
+                            handleSentimentChange('negative', Array.isArray(value) ? value[0] : value)
+                        }
                         max={100 - config.sentimentDistribution.positive}
                         marks
                         valueLabelDisplay="auto"
-                        valueLabelFormat={(value) => `${value}%`}
                     />
 
                     <Typography>
@@ -95,7 +97,7 @@ const SentimentDistributionTab: React.FC<Props> = ({
                         label="Number of Rows"
                         type="number"
                         value={config.rowCount}
-                        onChange={(e) => onChange('rowCount', parseInt(e.target.value))}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange('rowCount', parseInt(e.target.value))}
                         inputProps={{ min: 1, max: 100000 }}
                         helperText="Number of sentences to generate (1-10000)"
                     />
@@ -104,7 +106,7 @@ const SentimentDistributionTab: React.FC<Props> = ({
                         select
                         label="Domain"
                         value={config.domain}
-                        onChange={(e) => onChange('domain', e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange('domain', e.target.value)}
                         helperText="Select the content domain"
                     >
                         {domains.map((domain) => (

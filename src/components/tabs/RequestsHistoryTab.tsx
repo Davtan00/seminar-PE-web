@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactElement } from 'react';
 import {
   Box,
   Typography,
@@ -11,20 +11,27 @@ import {
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { RequestHistoryItem } from '../../types/types';
 import { AnalysisDownloadButton } from '../AnalysisDownloadButton';
+import { decompressData } from '../../utils/secureApiClient';
 
 interface Props {
   history: RequestHistoryItem[];
-  onJsonDownload: (itemId: string) => void;
+  onJsonDownload: (id: string) => void;
 }
 
-const RequestsHistoryTab: React.FC<Props> = ({ history, onJsonDownload }) => {
+const RequestsHistoryTab = ({ history, onJsonDownload }: Props) => {
   const downloadJson = (data: any, name: string, timestamp: string, itemId?: string) => {
     const formattedTimestamp = timestamp.replace(/[/:]/g, '-');
     const filename = `${name}_${formattedTimestamp}.json`;
     
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const decompressedData = {
+      ...data,
+      generated_data: data.generated_data ? decompressData(data.generated_data) : []
+    };
+    
+    const blob = new Blob([JSON.stringify(decompressedData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -50,7 +57,11 @@ const RequestsHistoryTab: React.FC<Props> = ({ history, onJsonDownload }) => {
               mb: 2, 
               p: 2,
               borderLeft: 6,
-              borderColor: item.status === 'success' ? 'success.main' : 'error.main'
+              borderColor: item.status === 'processing' 
+                ? 'warning.main'
+                : item.status === 'success' 
+                  ? 'success.main' 
+                  : 'error.main'
             }}
           >
             <ListItem
@@ -60,7 +71,7 @@ const RequestsHistoryTab: React.FC<Props> = ({ history, onJsonDownload }) => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', mb: 1 }}>
                 <Box>
                   <Typography variant="h6" sx={{ mb: 0.5 }}>
-                    {item.name || 'Unnamed Generation'}
+                    {item.name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     {new Date(item.timestamp).toLocaleString()}
@@ -74,18 +85,50 @@ const RequestsHistoryTab: React.FC<Props> = ({ history, onJsonDownload }) => {
                       size="small"
                     />
                   )}
-                  <Chip
-                    label={`${item.response?.generated_data?.length || 0} Reviews`}
-                    color="primary"
-                    size="small"
-                  />
-                  <Chip
-                    label={`${item.duration}ms`}
-                    variant="outlined"
-                    size="small"
-                  />
+                  {item.status === 'processing' ? (
+                    <Chip
+                      label="Processing..."
+                      color="warning"
+                      size="small"
+                    />
+                  ) : item.status === 'error' ? (
+                    <Chip
+                      icon={<ErrorOutlineIcon />}
+                      label="Error"
+                      color="error"
+                      size="small"
+                    />
+                  ) : (
+                    <>
+                      <Chip
+                        label={`${item.response?.generated_data?.length || 0} Reviews`}
+                        color="primary"
+                        size="small"
+                      />
+                      <Chip
+                        label={`${item.duration}ms`}
+                        variant="outlined"
+                        size="small"
+                      />
+                    </>
+                  )}
                 </Box>
               </Box>
+              
+              {item.status === 'error' && (
+                <Typography 
+                  color="error" 
+                  sx={{ 
+                    mt: 1, 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  <ErrorOutlineIcon fontSize="small" />
+                  Generation failed. Please try again.
+                </Typography>
+              )}
               
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
                 <Tooltip title="Download Config">

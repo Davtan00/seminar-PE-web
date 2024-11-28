@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { CssBaseline, Box, Typography, Container, Paper, Tabs, Tab, Button, Slider, Alert, Snackbar, Switch, FormControlLabel } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { CssBaseline, Box, Typography, Container, Paper, Tabs, Tab, Button, Slider, Alert, Snackbar, Switch, FormControlLabel, FormLabel } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import LoadingIndicator from './components/LoadingIndicator';
 import DownloadButton from './components/DownloadButton';
 import { GenerationConfig, GeneratedDataItem, GenerationResponse, RequestHistoryItem } from './types/types';
 import GeneratedDataDisplay from './components/GeneratedDataDisplay';
@@ -18,17 +17,19 @@ import AdvancedSettingsTab from './components/tabs/AdvancedSettingsTab';
 import HistoryIcon from '@mui/icons-material/History';
 import RequestsHistoryTab from './components/tabs/RequestsHistoryTab';
 import { exportConfigToFile, loadConfigFromFile } from './utils/fileHandlers';
-import { makeSecureRequest } from './utils/secureApiClient';
+import { makeSecureRequest, stopPolling, isRequestInProgress } from './utils/secureApiClient';
 import NameInputModal from './components/NameInputModal';
+import CircularProgress from '@mui/material/CircularProgress';
 
 const theme = createTheme();
 
 // Add this before the App component
 const mockGeneratedData: GenerationResponse = {
+  request_id: "mock-123",
   generated_data: [
     {
       id: 1,
-      text: "The pastries here are always fresh and delicious!",
+      text: "Sample positive sentiment",
       sentiment: "positive"
     },
     {
@@ -42,8 +43,26 @@ const mockGeneratedData: GenerationResponse = {
       sentiment: "positive"
     }
   ],
-  request_id: 'mock-request-007'
+  summary: {
+    total_generated: 1,  // Update this number based on your mock data length
+    sentiment_distribution: {
+      positive: 1,
+      negative: 0,
+      neutral: 0
+    }
+  }
 };
+
+interface TabProps {
+  config: GenerationConfig;
+  onChange: (key: keyof GenerationConfig, value: any) => void;
+  isLoading: boolean;
+}
+
+interface HistoryTabProps {
+  history: RequestHistoryItem[];
+  onJsonDownload: (id: string) => void;
+}
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -96,6 +115,7 @@ function App() {
 
   const [showNameModal, setShowNameModal] = useState(false);
   const [pendingApiKey, setPendingApiKey] = useState<string | null>(null);
+  const [activeRequestId, setActiveRequestId] = useState<string>('');
 
   const getStoredApiKey = (): string | null => {
     return sessionStorage.getItem('openai_api_key');
@@ -110,6 +130,9 @@ function App() {
 
   const handleGenerate = async () => {
     const storedApiKey = getStoredApiKey();
+    
+    const tempId = Date.now().toString();
+    setActiveRequestId(tempId);
 
     if (!storedApiKey) {
       console.log('No API key found, showing modal');
@@ -117,7 +140,6 @@ function App() {
       return;
     }
 
-    console.log('Starting generation with stored API key');
     setShowNameModal(true);
   };
 
@@ -128,31 +150,50 @@ function App() {
     try {
       const response = await makeSecureRequest(apiKey, config);
       
-      setRequestHistory(prev => [{
-        id: response.data.request_id,
-        name: name,
-        timestamp: new Date(),
-        duration: Date.now() - startTime,
-        config: { ...config },
-        responseSize: response.data.generated_data.length,
-        response: response.data,
-        status: 'success'
-      }, ...prev]);
+      // Update activeRequestId with the real request_id from backend
+      setActiveRequestId(response.data.request_id);
+
+      // Remove the processing entry and add the success entry
+      setRequestHistory(prev => {
+        // Filter out the processing entry with the same name
+        const filteredHistory = prev.filter(item => 
+          !(item.status === 'processing' && item.name === name)
+        );
+        
+        // Add the new success entry
+        return [{
+          id: response.data.request_id,
+          name: name,
+          timestamp: new Date(),
+          duration: Date.now() - startTime,
+          config: { ...config },
+          responseSize: response.data.generated_data.length,
+          response: response.data,
+          status: 'success'
+        }, ...filteredHistory];
+      });
 
       setGeneratedResponse(response.data);
 
     } catch (error: any) {
       console.error('Generation failed:', error);
 
-      setRequestHistory(prev => [{
-        id: Date.now().toString(),
-        timestamp: new Date(),
-        duration: Date.now() - startTime,
-        config: { ...config },
-        response: null,
-        status: 'error',
-        name: name
-      }, ...prev]);
+      // Similarly for error state, remove the processing entry
+      setRequestHistory(prev => {
+        const filteredHistory = prev.filter(item => 
+          !(item.status === 'processing' && item.name === name)
+        );
+        
+        return [{
+          id: Date.now().toString(),
+          timestamp: new Date(),
+          duration: Date.now() - startTime,
+          config: { ...config },
+          response: null,
+          status: 'error',
+          name: name
+        }, ...filteredHistory];
+      });
 
       if (error?.response?.status === 401 || error?.message?.includes('API key')) {
         console.log('Invalid API key, clearing and showing modal');
@@ -173,11 +214,21 @@ function App() {
 
   const handleNameSubmit = (name: string) => {
     setShowNameModal(false);
+    
+    setRequestHistory(prev => [{
+      id: activeRequestId,
+      name: name,
+      timestamp: new Date(),
+      status: 'processing',
+      config: { ...config },
+      duration: 0,
+      response: null,
+    }, ...prev]);
+
     if (pendingApiKey) {
       generateWithApiKey(pendingApiKey, name);
       setPendingApiKey(null);
     } else {
-      // Fallback to stored key if pendingApiKey is null
       const storedApiKey = getStoredApiKey();
       if (storedApiKey) {
         generateWithApiKey(storedApiKey, name);
@@ -213,7 +264,7 @@ function App() {
       control={
         <Switch
           checked={config.strictMode}
-          onChange={(e) => handleConfigChange('strictMode', e.target.checked)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleConfigChange('strictMode', e.target.checked)}
           color="success"
         />
       }
@@ -234,6 +285,15 @@ function App() {
       return item;
     }));
   };
+
+  useEffect(() => {
+    return () => {
+      // Cleanup all active polls when component unmounts
+      if (generatedResponse?.request_id) {
+        stopPolling(generatedResponse.request_id);
+      }
+    };
+  }, [generatedResponse?.request_id]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -270,15 +330,14 @@ function App() {
               </Box>
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                 <StrictModeToggle />
-                <input
-                  type="file"
-                  accept=".json"
-                  style={{ display: 'none' }}
-                  id="config-file-input"
-                  onChange={handleLoadConfig}
-                  {...({} as any)}
-                />
-                <label htmlFor="config-file-input">
+                {React.createElement('input', {
+                  type: "file",
+                  accept: ".json",
+                  style: { display: 'none' },
+                  id: "config-file-input",
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => handleLoadConfig(e)
+                })}
+                <FormLabel component="label" htmlFor="config-file-input">
                   <Button
                     variant="contained"
                     color="secondary"
@@ -293,7 +352,7 @@ function App() {
                   >
                     Import Config
                   </Button>
-                </label>
+                </FormLabel>
                 <Button
                   variant="contained"
                   color="secondary"
@@ -310,18 +369,29 @@ function App() {
                 </Button>
                 <Button
                   variant="contained"
-                  startIcon={<PlayArrowIcon />}
+                  startIcon={isLoading || isRequestInProgress(activeRequestId) ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <PlayArrowIcon />
+                  )}
                   onClick={handleGenerate}
-                  disabled={isLoading}
+                  disabled={isLoading || isRequestInProgress(activeRequestId)}
                   sx={{
                     backgroundColor: 'white',
                     color: 'primary.main',
+                    position: 'relative',
                     '&:hover': {
                       backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    }
+                    },
+                    '&:disabled': {
+                      backgroundColor: 'white',
+                      color: 'primary.main',
+                      opacity: 0.9,
+                    },
+                    minWidth: '160px'  // Ensures button doesn't change size
                   }}
                 >
-                  {isLoading ? 'Generating...' : 'Generate Data'}
+                  {isLoading || isRequestInProgress(activeRequestId) ? 'Processing' : 'Generate Data'}
                 </Button>
               </Box>
             </Box>
@@ -340,7 +410,7 @@ function App() {
           >
             <Tabs
               value={activeTab}
-              onChange={(_, newValue) => setActiveTab(newValue)}
+              onChange={(event: React.SyntheticEvent, newValue: number) => setActiveTab(newValue)}
               sx={{
                 borderBottom: 1,
                 borderColor: 'divider',
@@ -411,32 +481,6 @@ function App() {
 
           </Paper>
 
-          {/* Results Section */}
-          {generatedResponse && (
-            <Paper
-              elevation={2}
-              sx={{
-                p: 3,
-                mt: 2,
-                borderRadius: '12px',
-                border: '1px solid rgba(0,0,0,0.1)',
-                maxHeight: '30vh',
-                overflowY: 'auto'
-              }}
-            >
-              <Box sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 2
-              }}>
-                <Typography variant="h6">Generated Results</Typography>
-                <DownloadButton data={generatedResponse} />
-              </Box>
-              <GeneratedDataDisplay data={generatedResponse.generated_data} />
-            </Paper>
-          )}
-
           {/* openAI API Key Modal,we might need another backend API key to secure this more. */}
           <ApiKeyModal
             open={showApiKeyModal}
@@ -451,9 +495,6 @@ function App() {
             }}
             onSubmit={handleNameSubmit}
           />
-
-          {/* Loading Indicator */}
-          <LoadingIndicator open={isLoading} />
 
           <Snackbar
             open={showSuccessNotification}
