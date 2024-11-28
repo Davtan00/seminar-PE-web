@@ -86,8 +86,8 @@ function App() {
     model: 'gpt-4o-mini',
 
     // Advanced Controls
-    privacyLevel: 0.5,
-    biasControl: 0.5,
+    privacyLevel: 0.8,
+    biasControl: 0.7,
     sentimentIntensity: 0.5,
     realism: 0.7,
     domainRelevance: 0.8,
@@ -322,10 +322,10 @@ function App() {
             }}>
               <Box>
                 <Typography variant="h4" gutterBottom>
-                  Sentiment Generator
+                  Synthetic Sentiment Generator
                 </Typography>
                 <Typography variant="subtitle1">
-                  Configure and generate sentiment data with advanced AI models
+                  Configure and generate synthetic sentiment data with advanced AI models
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>

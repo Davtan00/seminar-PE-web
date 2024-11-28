@@ -8,6 +8,39 @@ interface Props {
   isLoading: boolean;
 }
 
+const sliderStyles = {
+  '& .MuiSlider-thumb': {
+    width: 12,
+    height: 12,
+    transition: '0.3s cubic-bezier(.47,1.64,.41,.8)',
+    '&:hover, &.Mui-focusVisible': {
+      boxShadow: '0px 0px 0px 8px rgba(25, 118, 210, 0.16)',
+    },
+  },
+  '& .MuiSlider-rail': {
+    opacity: 0.32,
+  },
+  '& .MuiSlider-valueLabel': {
+    lineHeight: 1.2,
+    fontSize: 12,
+    background: 'unset',
+    padding: 0,
+    width: 32,
+    height: 32,
+    borderRadius: '50% 50% 50% 0',
+    backgroundColor: '#1976d2',
+    transformOrigin: 'bottom left',
+    transform: 'translate(50%, -100%) rotate(-45deg) scale(0)',
+    '&:before': { display: 'none' },
+    '&.MuiSlider-valueLabelOpen': {
+      transform: 'translate(50%, -100%) rotate(-45deg) scale(1)',
+    },
+    '& > *': {
+      transform: 'rotate(45deg)',
+    },
+  },
+};
+
 const ModelSettingsTab = ({ config, onChange, isLoading }: Props) => {
   const availableModels = [
     {
@@ -106,14 +139,16 @@ const ModelSettingsTab = ({ config, onChange, isLoading }: Props) => {
             </Typography>
             <Slider
               value={config[param.key as keyof GenerationConfig] as number}
-              onChange={(_: Event, value: number | number[], activeThumb: number) => 
-                onChange(param.key as keyof GenerationConfig, value as number)
+              onChange={(_: Event, value: number | number[]) => 
+                onChange(param.key as keyof GenerationConfig, Array.isArray(value) ? value[0] : value)
               }
               min={param.min}
               max={param.max}
               step={param.step}
               marks
               valueLabelDisplay="auto"
+              disabled={isLoading}
+              sx={sliderStyles}
             />
           </Box>
         ))}
