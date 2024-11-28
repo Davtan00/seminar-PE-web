@@ -75,7 +75,7 @@ function App() {
       neutral: 34,
     },
     rowCount: 100,
-    domain: 'all',
+    domain: "ecommerce",
 
     // Model Parameters
     temperature: 1,
@@ -165,14 +165,13 @@ function App() {
           id: response.data.request_id,
           name: name,
           timestamp: new Date(),
-          duration: Date.now() - startTime,
+          duration: response.data.duration, 
           config: { ...config },
           responseSize: response.data.generated_data.length,
           response: response.data,
           status: 'success'
         }, ...filteredHistory];
       });
-
       setGeneratedResponse(response.data);
 
     } catch (error: any) {

@@ -105,11 +105,13 @@ const RequestsHistoryTab = ({ history, onJsonDownload }: Props) => {
                         color="primary"
                         size="small"
                       />
-                      <Chip
-                        label={`${item.duration}ms`}
-                        variant="outlined"
-                        size="small"
-                      />
+                      {item.status === 'success' && item.duration && (
+                        <Chip
+                          label={`${(item.duration / 1000).toFixed(1)}s`}
+                          variant="outlined"
+                          size="small"
+                        />
+                      )}
                     </>
                   )}
                 </Box>

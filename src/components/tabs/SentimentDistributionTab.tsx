@@ -47,7 +47,7 @@ const SentimentDistributionTab = ({
     onChange,
     isLoading
 }: Props) => {
-    const domains = ['all', 'business', 'technology', 'healthcare', 'education'];
+    const domains = ['ecommerce', 'technology', 'software', 'restaurant', 'hotel', 'education','healthcare'] ;
 
     const calculateNewDistribution = (type: 'positive' | 'negative', value: number, currentDistribution: GenerationConfig['sentimentDistribution']) => {
         if (type === 'positive') {
@@ -145,6 +145,36 @@ const SentimentDistributionTab = ({
                         value={config.domain}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange('domain', e.target.value)}
                         helperText="Select the content domain"
+                        SelectProps={{
+                            displayEmpty: true,
+                            renderValue: (selected: any) => {
+                                if (!selected) {
+                                    return <Typography color="text.secondary">Enter domain here</Typography>;
+                                }
+                                return selected.charAt(0).toUpperCase() + selected.slice(1);
+                            },
+                            MenuProps: {
+                                PaperProps: {
+                                    sx: {
+                                        maxHeight: 300,
+                                        '& .MuiMenuItem-root': {
+                                            py: 1,
+                                            px: 2,
+                                            '&:hover': {
+                                                backgroundColor: 'action.hover',
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        }}
+                        sx={{
+                            '& .MuiSelect-select': {
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                            },
+                        }}
                     >
                         {domains.map((domain) => (
                             <MenuItem key={domain} value={domain}>

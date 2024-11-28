@@ -64,4 +64,8 @@ export interface GenerationConfig {
     name: string;
     jsonDownloaded?: boolean;
     pdfDownloaded?: boolean;
+    data?: {
+      duration: number;
+     
+    };
   }

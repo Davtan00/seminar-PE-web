@@ -63,6 +63,7 @@ export const decompressData = (compressed: string): any => {
 };
 
 export const makeSecureRequest = async (apiKey: string, config: any) => {
+  const startTime = Date.now();
   const encryptedKey = encryptApiKey(apiKey);
   const strictParam = config.strictMode ? '?strict=true' : '?strict=false';
   
@@ -75,10 +76,14 @@ export const makeSecureRequest = async (apiKey: string, config: any) => {
       config
     });
 
+    const duration = Date.now() - startTime;
+    console.log('Duration calculated:', duration);
+
     // Compress the response data immediately
     const compressedData = {
       ...response.data,
-      generated_data: compressData(response.data.generated_data)
+      generated_data: compressData(response.data.generated_data),
+      duration: duration
     };
     
     // Start polling with a slight delay to prevent immediate browser load
