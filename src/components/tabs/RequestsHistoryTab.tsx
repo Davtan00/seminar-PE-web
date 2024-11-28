@@ -101,7 +101,7 @@ const RequestsHistoryTab = ({ history, onJsonDownload }: Props) => {
                   ) : (
                     <>
                       <Chip
-                        label={`${item.response?.generated_data?.length || 0} Reviews`}
+                        label={`${item.response?.summary?.total_generated || 0} Reviews`}
                         color="primary"
                         size="small"
                       />
